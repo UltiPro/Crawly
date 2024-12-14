@@ -48,7 +48,9 @@ if __name__ == "__main__":
         raise ValueError("Passed URL address is incorrect.")
 
     if args.method.upper() not in Crawly.methods():
-        raise ValueError(f"Incorrect method. Only {Crawly.methods_string()} are allowed.")
+        raise ValueError(
+            f"Incorrect method. Only {Crawly.methods_string()} are allowed."
+        )
 
     if args.time < 1:
         raise ValueError("Incorrect time. Time cannot be lower than 1 second.")
