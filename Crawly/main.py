@@ -22,7 +22,7 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default="bfs",
-        help=f"Method of search '-m <method>'. Only {Crawly.methods_string()} are allowed. Default: bfs.",
+        help=f"Method of search '-m <method>'. Only {", ".join(Crawly.methods())} are allowed. Default: bfs.",
     )
     parser.add_argument(
         "--time",
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     if args.method.upper() not in Crawly.methods():
         raise ValueError(
-            f"Incorrect method. Only {Crawly.methods_string()} are allowed."
+            f"Incorrect method. Only {", ".join(Crawly.methods())} are allowed."
         )
 
     if args.time < 1:
