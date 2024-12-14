@@ -22,7 +22,7 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default="bfs",
-        help="Method of search '-m <method>'. Only 'bfs' or 'dfs' allowed. Default: bfs.",
+        help=f"Method of search '-m <method>'. Only {Crawly.methods_string()} are allowed. Default: bfs.",
     )
     parser.add_argument(
         "--time",
@@ -47,8 +47,8 @@ if __name__ == "__main__":
     if not url_regex.fullmatch(args.url):
         raise ValueError("Passed URL address is incorrect.")
 
-    if args.method not in Crawly.methods():
-        raise ValueError("Incorrect method. Only 'bfs' and 'dfs' are allowed.")
+    if args.method.upper() not in Crawly.methods():
+        raise ValueError(f"Incorrect method. Only {Crawly.methods_string()} are allowed.")
 
     if args.time < 1:
         raise ValueError("Incorrect time. Time cannot be lower than 1 second.")
