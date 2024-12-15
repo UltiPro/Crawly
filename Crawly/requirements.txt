@@ -4,6 +4,7 @@ certifi==2024.12.14
 charset-normalizer==3.4.0
 idna==3.10
 networkx==3.4.2
+numpy==2.2.0
 packaging==24.2
 plotly==5.24.1
 requests==2.32.3

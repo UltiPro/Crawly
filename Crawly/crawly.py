@@ -9,6 +9,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from datetime import datetime
 
+from fake_useragent import UserAgent
+from playwright.sync_api import sync_playwright
+
 
 class Crawly:
     _methods = ["BFS", "DFS"]
@@ -69,16 +72,60 @@ class Crawly:
         try:
             response = requests.get(url, timeout=5)
             response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
-            self._results.append((url, soup.get_text(separator=" ", strip=True)))
-            self._visited.add(url)
-            for a_tag in soup.find_all("a", href=True):
-                full_url = urljoin(url, a_tag["href"])
-                if full_url not in self._visited and full_url.startswith("http"):
-                    self._edges.append((url, full_url))
-                    queue.append((full_url, depth + 1))
+        except requests.exceptions.HTTPError as e:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(
+                    headless=False
+                )  # Use True for headless mode
+                page = browser.new_page()
+
+                # Set random proxy for this request
+                # self._set_random_proxy(page)
+
+                headers = {
+                    "User-Agent": UserAgent().random,
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": url,
+                }
+                page.set_extra_http_headers(headers)
+
+                # Try to load the page
+                page.goto(url)
+
+                input("Press Enter after solving CAPTCHA...")
+                # Once CAPTCHA is solved or page is loaded, extract content
+                page_content = page.content()
+                soup = BeautifulSoup(page_content, "html.parser")
+                self._results.append((url, soup.get_text(separator=" ", strip=True)))
+                self._visited.add(url)
+
+                # Follow links on the page and add them to the queue
+                for a_tag in soup.find_all("a", href=True):
+                    full_url = urljoin(url, a_tag["href"])
+                    if full_url not in self._visited and full_url.startswith("http"):
+                        self._edges.append((url, full_url))
+                        queue.append((full_url, depth + 1))
+
+                # Keep the page open until the user decides to close it
+                print(f"Page {url} processed. The browser window will remain open.")
+                input(
+                    "Press Enter to close the browser..."
+                )  # Wait for user input to close the browser
+
+                # Close the browser after the user presses Enter
+                browser.close()
+
         except Exception as e:
             print(f"Unresolved exception during processing '{url}': {e}")
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        self._results.append((url, soup.get_text(separator=" ", strip=True)))
+        self._visited.add(url)
+        for a_tag in soup.find_all("a", href=True):
+            full_url = urljoin(url, a_tag["href"])
+            if full_url not in self._visited and full_url.startswith("http"):
+                self._edges.append((url, full_url))
+                queue.append((full_url, depth + 1))
 
     def _time(self, time):
         hours, remainder = divmod(int(time), 3600)
@@ -88,7 +135,8 @@ class Crawly:
     def _save(self):
         filename = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self._save_to_csv(filename)
-        self._save_graph(filename)
+        if len(self._edges) > 0:
+            self._save_graph(filename)
         print(f"\nResults saved to '{filename}'.csv/html at current directory.")
 
     def _save_to_csv(self, filename):
