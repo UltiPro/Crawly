@@ -40,6 +40,15 @@ if __name__ == "__main__":
         default=10,
         help="Maximum depth of search '-d <value>'. Default: 10.",
     )
+    parser.add_argument(
+        "--full_graph",
+        "-fg",
+        type=bool,
+        action=argparse.BooleanOptionalAction,
+        required=False,
+        default=False,
+        help="If this flag is set, the script will generate a graph with all pages (even those not visited) '-fg'.",
+    )
     args = parser.parse_args()
 
     # Validation
@@ -60,5 +69,5 @@ if __name__ == "__main__":
 
     # Crawly
 
-    crawly = Crawly(args.url, args.method, args.time, args.depth)
+    crawly = Crawly(args.url, args.method, args.time, args.depth, args.full_graph)
     crawly.start()
