@@ -69,17 +69,15 @@ class Crawly:
         return depth > self._max_depth or time > self._max_time
 
     def _process_page(self, url, depth, queue):
+        body_content = None
         try:
             response = requests.get(url, timeout=5)
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             with sync_playwright() as p:
-                browser = p.chromium.launch(
-                    headless=False
-                )  # Use True for headless mode
+                browser = p.chromium.launch(headless=False)
                 page = browser.new_page()
 
-                # Set random proxy for this request
                 # self._set_random_proxy(page)
 
                 headers = {
@@ -89,36 +87,20 @@ class Crawly:
                 }
                 page.set_extra_http_headers(headers)
 
-                # Try to load the page
                 page.goto(url)
 
-                input("Press Enter after solving CAPTCHA...")
-                # Once CAPTCHA is solved or page is loaded, extract content
-                page_content = page.content()
-                soup = BeautifulSoup(page_content, "html.parser")
-                self._results.append((url, soup.get_text(separator=" ", strip=True)))
-                self._visited.add(url)
+                body_content = page.content()
 
-                # Follow links on the page and add them to the queue
-                for a_tag in soup.find_all("a", href=True):
-                    full_url = urljoin(url, a_tag["href"])
-                    if full_url not in self._visited and full_url.startswith("http"):
-                        self._edges.append((url, full_url))
-                        queue.append((full_url, depth + 1))
+                input("Press Enter to close the browser...")
 
-                # Keep the page open until the user decides to close it
-                print(f"Page {url} processed. The browser window will remain open.")
-                input(
-                    "Press Enter to close the browser..."
-                )  # Wait for user input to close the browser
-
-                # Close the browser after the user presses Enter
                 browser.close()
 
         except Exception as e:
             print(f"Unresolved exception during processing '{url}': {e}")
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(
+            body_content if body_content else response.text, "html.parser"
+        )
         self._results.append((url, soup.get_text(separator=" ", strip=True)))
         self._visited.add(url)
         for a_tag in soup.find_all("a", href=True):
@@ -135,7 +117,7 @@ class Crawly:
     def _save(self):
         filename = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self._save_to_csv(filename)
-        if len(self._edges) > 0:
+        if len(self._edges) > 1:
             self._save_graph(filename)
         print(f"\nResults saved to '{filename}'.csv/html at current directory.")
 
