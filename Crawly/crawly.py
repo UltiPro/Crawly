@@ -90,8 +90,11 @@ class Crawly:
                 page.goto(url)
 
                 body_content = page.content()
+                soup = BeautifulSoup(body_content, "html.parser")
 
-                input("Press Enter to close the browser...")
+                # CAPTCHA
+                if self._is_captcha_page(soup, body_content):
+                    input("Press Enter to close the browser...")
 
                 browser.close()
 
@@ -108,6 +111,28 @@ class Crawly:
             if full_url not in self._visited and full_url.startswith("http"):
                 self._edges.append((url, full_url))
                 queue.append((full_url, depth + 1))
+
+    def _is_captcha_page(self, soup, body_content):
+        """
+        Funkcja do wykrywania CAPTCHA na stronie.
+        """
+        keywords = [
+            "captcha",
+            "verify",
+            "recaptcha",
+        ]  # Typowe frazy dla stron z CAPTCHA
+        if any(keyword in body_content.lower() for keyword in keywords):
+            return True
+
+        # Sprawdzenie obecności obrazków CAPTCHA
+        for img in soup.find_all("img"):
+            if (
+                "captcha" in img.get("src", "").lower()
+                or "captcha" in img.get("alt", "").lower()
+            ):
+                return True
+
+        return False
 
     def _time(self, time):
         hours, remainder = divmod(int(time), 3600)
