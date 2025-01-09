@@ -39,14 +39,37 @@ class Crawly:
         )
         print("HH:MM:SS | Depth")
         print("---------|------")
-        match self._search_method:
-            case "BFS":
-                self._bfs()
-            case "DFS":
-                self._dfs(self._start_url, 0)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=False,
+                slow_mo=random.uniform(0, 2) * 1000,
+                proxy={
+                    "server": "dc.oxylabs.io:8004",
+                    "username": "user-test1_SIc47",
+                    "password": "Test1Test1Test1_",
+                },
+                timeout=20000,
+            )
+            page = browser.new_page()
+
+            headers = {
+                "User-Agent": UserAgent().random,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "pl-PL,pl;q=0.9,en-GB;q=0.8,en-US;q=0.7,en;q=0.6",
+                "Referer": "https://www.google.com/" if self._init_bool else url,
+                "Upgrade-Insecure-Requests": "1",
+            }
+            self._init_bool = False
+            page.set_extra_http_headers(headers)
+            match self._search_method:
+                case "BFS":
+                    self._bfs(page)
+                case "DFS":
+                    self._dfs(page, self._start_url, 0)
+            browser.close()
         self._save()
 
-    def _bfs(self):
+    def _bfs(self, page):
         queue = deque([(self._start_url, 0)])
         while queue:
             url, depth = queue.popleft()
@@ -54,33 +77,33 @@ class Crawly:
             if self._should_stop(depth, time):
                 continue
             print(f"{self._time(time)} | {depth}")
-            self._process_page(url, depth, queue)
+            self._process_page(page, url, depth, queue)
 
-    def _dfs(self, url, depth):
+    def _dfs(self, page, url, depth):
         time = t.time() - self._start_time + 1
         if self._should_stop(depth, time):
             return
         print(f"{self._time(time)} | {depth}")
         queue = []
         try:
-            self._process_page(url, depth, queue)
+            self._process_page(page, url, depth, queue)
         except Exception as e:
             print(
                 f"UNRESOLVED EXCEPTION OCCURED ... Check Internet Connection or Proxy Server.\nInfo:\n{e}"
             )
         for link, new_depth in queue:
             if link not in self._visited:
-                self._dfs(link, new_depth)
+                self._dfs(page, link, new_depth)
 
     def _should_stop(self, depth, time):
         return depth > self._max_depth or time > self._max_time
 
-    def _process_page(self, url, depth, queue):
+    def _process_page(self, page, url, depth, queue):
         soup = None
         try:
-            soup = self._process_page_soap(url)
+            soup = self._process_page_soap(page, url)
         except Exception:
-            soup = self._process_page_soap(url, False)
+            soup = self._process_page_soap(page, url, False)
 
         self._results.append((url, soup.get_text(separator=" ", strip=True)))
         self._visited.add(url)
@@ -94,56 +117,34 @@ class Crawly:
                     self._edges.append((url, full_url))
                     queue.append((full_url, depth + 1))
 
-    def _process_page_soap(self, url, not_protected=True):
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=False,
-                slow_mo=(0 if not_protected else (random.uniform(0, 2) * 1000)),
-                proxy={
-                    "server": "dc.oxylabs.io:8001",
-                    "username": "user-test1_SIc47",
-                    "password": "Test1Test1Test1_"
-                },
-                timeout=20000
-            )
-            page = browser.new_page()
+    def _process_page_soap(self, page, url, not_protected=True):
+        page.goto(url)
 
-            # if not protected:
-            # self._set_random_proxy(page)
+        if not not_protected:
+            try:
+                cookie_button = page.wait_for_selector(
+                    "button[data-role='accept-consent']",
+                    timeout=(random.uniform(1, 4) * 1000),
+                )
+                cookie_button.click()
+            except Exception:
+                pass
 
-            headers = {
-                "User-Agent": UserAgent().random,
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Language": "pl-PL,pl;q=0.9,en-GB;q=0.8,en-US;q=0.7,en;q=0.6",
-                "Referer": "https://www.google.com/" if self._init_bool else url,
-                "Upgrade-Insecure-Requests": "1",
-            }
-            self._init_bool = False
-            page.set_extra_http_headers(headers)
+        body_content = page.content()
+        soup = BeautifulSoup(body_content, "html.parser")
 
-            page.goto(url)
-
-            if not not_protected:
-                try:
-                    cookie_button = page.wait_for_selector(
-                        "button[data-role='accept-consent']",
-                        timeout=(random.uniform(1, 4) * 1000),
-                    )
-                    cookie_button.click()
-                except Exception:
-                    pass
-
+        # CAPTCHA
+        if not not_protected and self._is_captcha_page(soup, body_content):
+            print("CAPTCHA detected. Waiting for user to resolve it...")
+            try:
+                with page.expect_navigation(timeout=120000):
+                    input("Press Enter after solving CAPTCHA...")
+            except Exception as e:
+                pass
             body_content = page.content()
             soup = BeautifulSoup(body_content, "html.parser")
 
-            # CAPTCHA
-            if not not_protected and self._is_captcha_page(soup, body_content):
-                page.wait_for_timeout((random.uniform(1, 5) * 1000))
-                input("Press Enter to close the browser...")
-
-            browser.close()
-
-            return soup
+        return soup
 
     def _is_captcha_page(self, soup, body_content):
         keywords = ["captcha", "recaptcha", "verify"]
