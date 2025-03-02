@@ -1,8 +1,0 @@
-main.py "https://pl.wikipedia.org/wiki/Fizyka" -t 5 -d 2 -m dfs
-
-# zerowy czas zrób
-# graf numerki
-# csv numerki
-# proxy
-* headery test
-* nowe requirementsy

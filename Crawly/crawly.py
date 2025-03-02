@@ -1,14 +1,13 @@
 import random
 import time as t
 import csv
+from datetime import datetime
+
 import networkx as nx
 import plotly.graph_objects as go
-
 from collections import deque
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from datetime import datetime
-
 from fake_useragent import UserAgent
 from playwright.sync_api import sync_playwright
 
@@ -16,18 +15,31 @@ from playwright.sync_api import sync_playwright
 class Crawly:
     _methods = ["BFS", "DFS"]
 
-    def __init__(self, start_url, search_method, max_time, max_depth, full_graph):
+    def __init__(
+        self,
+        start_url,
+        search_method,
+        max_time,
+        max_depth,
+        full_graph,
+        proxy_server,
+        proxy_username,
+        proxy_password,
+    ):
         self._start_url = start_url
         self._search_method = search_method.upper()
         self._max_time = max_time
         self._max_depth = max_depth
         self._full_graph = full_graph
+        self._proxy_server = proxy_server
+        self._proxy_username = proxy_username
+        self._proxy_password = proxy_password
+        self._user_agent = UserAgent().random
+        self._prev_url = "https://www.google.com/"
+        self._start_time = t.time()
         self._visited = set()
         self._results = []
         self._edges = []
-        self._start_time = t.time()
-
-        self._init_bool = True
 
     def start(self):
         print(
@@ -43,24 +55,18 @@ class Crawly:
             browser = p.chromium.launch(
                 headless=False,
                 slow_mo=random.uniform(0, 2) * 1000,
-                proxy={
-                    "server": "dc.oxylabs.io:8004",
-                    "username": "user-test1_SIc47",
-                    "password": "Test1Test1Test1_",
-                },
                 timeout=20000,
+                proxy=(
+                    {
+                        "server": self._proxy_server,
+                        "username": self._proxy_username,
+                        "password": self._proxy_password,
+                    }
+                    if self._proxy_server
+                    else None
+                ),
             )
             page = browser.new_page()
-
-            headers = {
-                "User-Agent": UserAgent().random,
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Language": "pl-PL,pl;q=0.9,en-GB;q=0.8,en-US;q=0.7,en;q=0.6",
-                "Referer": "https://www.google.com/" if self._init_bool else url,
-                "Upgrade-Insecure-Requests": "1",
-            }
-            self._init_bool = False
-            page.set_extra_http_headers(headers)
             match self._search_method:
                 case "BFS":
                     self._bfs(page)
@@ -75,9 +81,14 @@ class Crawly:
             url, depth = queue.popleft()
             time = t.time() - self._start_time + 1
             if self._should_stop(depth, time):
-                continue
+                return
             print(f"{self._time(time)} | {depth}")
-            self._process_page(page, url, depth, queue)
+            try:
+                self._process_page(page, url, depth, queue)
+            except Exception as e:
+                raise RuntimeError(
+                    f"UNRESOLVED EXCEPTION OCCURED ... Check Internet Connection or Proxy Server.\nInfo:\n{e}"
+                )
 
     def _dfs(self, page, url, depth):
         time = t.time() - self._start_time + 1
@@ -88,7 +99,7 @@ class Crawly:
         try:
             self._process_page(page, url, depth, queue)
         except Exception as e:
-            print(
+            raise RuntimeError(
                 f"UNRESOLVED EXCEPTION OCCURED ... Check Internet Connection or Proxy Server.\nInfo:\n{e}"
             )
         for link, new_depth in queue:
@@ -118,6 +129,15 @@ class Crawly:
                     queue.append((full_url, depth + 1))
 
     def _process_page_soap(self, page, url, not_protected=True):
+        headers = {
+            "User-Agent": self._user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "pl-PL,pl;q=0.9,en-GB;q=0.8,en-US;q=0.7,en;q=0.6",
+            "Referer": self._prev_url,
+        }
+        page.set_extra_http_headers(headers)
+        self._prev_url = url
+
         page.goto(url)
 
         if not not_protected:
@@ -139,7 +159,7 @@ class Crawly:
             try:
                 with page.expect_navigation(timeout=120000):
                     input("Press Enter after solving CAPTCHA...")
-            except Exception as e:
+            except Exception:
                 pass
             body_content = page.content()
             soup = BeautifulSoup(body_content, "html.parser")
