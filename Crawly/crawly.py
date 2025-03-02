@@ -116,6 +116,7 @@ class Crawly:
         except Exception:
             soup = self._process_page_soap(page, url, False)
 
+        # HERE YOU CAN EDIT THE LOGIC OF COLLECTED DATA
         self._results.append((url, soup.get_text(separator=" ", strip=True)))
         self._visited.add(url)
         for a_tag in soup.find_all("a", href=True):
@@ -189,7 +190,7 @@ class Crawly:
     def _save(self):
         filename = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         self._save_to_csv(filename)
-        if len(self._edges) > 1:
+        if len(self._results) > 1:
             self._save_graph(filename)
         print(f"\nResults saved to '{filename}'.csv/html at current directory.")
 
