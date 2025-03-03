@@ -1,7 +1,7 @@
 # Crawly
 Crawly created by Patryk 'UltiPro' Wójtowicz using Python.
 
-The project is a web crawler that implements both BFS and DFS search methods. It can be configured by selecting options such as search method, time limits, search depth, whether to generate a full graph, and optional proxy server settings. The application collects only URLs and the contents of "a" tags. However, the code can be easily adapted to specific needs in the "_process_page" function. During execution, the program launches a browser using the Playwright package. The browser navigates through web pages, if necessary, it pauses to let the user solve captchas etc. The output consists of a CSV file containing URLs and "a" tags contents, as well as an HTML page with a graph representing the connections between websites.
+The project is a web crawler with web scrapper that implements both BFS and DFS search methods. It can be configured by selecting options such as search method, time limits, search depth, whether to generate a full graph, and optional proxy server settings. The application collects only URLs and the contents of "a" tags. However, the code can be easily adapted to specific needs in the "_process_page" function. During execution, the program launches a browser using the Playwright package. The browser navigates through web pages, if necessary, it pauses to let the user solve captchas etc. The output consists of a CSV file containing URLs and "a" tags contents, as well as an HTML page with a graph representing the connections between websites.
 
 # Dependencies and Usage
 
