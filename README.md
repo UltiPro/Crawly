@@ -33,20 +33,22 @@ Installation:
 
 ### Using the app
 
-> python main.py [url-address]
+> python main.py [url-address] [options]
 
-                        ### Options
-
-                        | Property      | Default Value |
-                        | ------------- | ------------- |
-                        | method (-m)   | bfs           |
-                        | time          | 60            |
-                        | time          | 60            |
-                        | time          | 60            |
-                        | time          | 60            |
-                        | time          | 60            |
+| Option         | Short | Description             | Default Value |
+| -------------- | ----- | ----------------------- | ------------- |
+| method         | -m    | Search method           | bfs           |
+| time           | -t    | Execution time (s)      | 60            |
+| depth          | -d    | Maximum search depth    | 10            |
+| full_graph     | -fg   | Generate a full graph   | False         |
+| proxy_server   | -ps   | Proxy server IP/address | —             |
+| proxy_username | -pu   | Proxy username          | —             |
+| proxy_password | -pp   | Proxy password          | —             |
 
 # Preview
 
-                        ![Preview](/screenshots/main.png)
-                        # czy git jest te miejsce do edycji process_page
+![Terminal Preview](/screenshots/terminal.png)
+
+![CSV Preview](/screenshots/csv.png)
+
+![HTML Preview](/screenshots/html.png)
