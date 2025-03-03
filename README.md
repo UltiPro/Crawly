@@ -35,15 +35,15 @@ Installation:
 
 > python main.py [url-address] [options]
 
-| Option         | Short | Description             | Default Value |
-| -------------- | ----- | ----------------------- | ------------- |
-| method         | -m    | Search method           | bfs           |
-| time           | -t    | Execution time (s)      | 60            |
-| depth          | -d    | Maximum search depth    | 10            |
-| full_graph     | -fg   | Generate a full graph   | False         |
-| proxy_server   | -ps   | Proxy server IP/address | —             |
-| proxy_username | -pu   | Proxy username          | —             |
-| proxy_password | -pp   | Proxy password          | —             |
+| Option           | Short | Description             | Default Value |
+| ---------------- | ----- | ----------------------- | ------------- |
+| --method         | -m    | Search method           | bfs           |
+| --time           | -t    | Execution time (s)      | 60            |
+| --depth          | -d    | Maximum search depth    | 10            |
+| --full_graph     | -fg   | Generate a full graph   | False         |
+| --proxy_server   | -ps   | Proxy server IP/address | —             |
+| --proxy_username | -pu   | Proxy username          | —             |
+| --proxy_password | -pp   | Proxy password          | —             |
 
 # Preview
 
