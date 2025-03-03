@@ -47,8 +47,8 @@ Installation:
 
 # Preview
 
-![Terminal Preview](/screenshots/terminal.png)
+![Terminal Preview](/screenshots/Terminal.png)
 
-![CSV Preview](/screenshots/csv.png)
+![CSV Preview](/screenshots/CSV.png)
 
-![HTML Preview](/screenshots/html.png)
+![HTML Preview](/screenshots/HTML.png)
