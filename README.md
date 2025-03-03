@@ -47,8 +47,10 @@ Installation:
 
 # Preview
 
-![Terminal Preview](/screenshots/Terminal.png)
+<p align="center">
+    <img src="./screenshots/Terminal.png" alt="Terminal Preview">
+</p>
 
-![CSV Preview](/screenshots/CSV.png)
+<img src="./screenshots/CSV.png" alt="CSV Preview">
 
-![HTML Preview](/screenshots/HTML.png)
+<img src="./screenshots/HTML.png" alt="HTML Preview">
